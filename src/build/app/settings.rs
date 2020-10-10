@@ -10,7 +10,7 @@ bitflags! {
         const SC_REQUIRED                    = 1 << 1;
         const A_REQUIRED_ELSE_HELP           = 1 << 2;
         const GLOBAL_VERSION                 = 1 << 3;
-        const VERSIONLESS_SC                 = 1 << 4;
+        const DISABLE_VERSION_FLAG_FOR_SC    = 1 << 4;
         const UNIFIED_HELP                   = 1 << 5;
         const WAIT_ON_ERROR                  = 1 << 6;
         const SC_REQUIRED_ELSE_HELP          = 1 << 7;
@@ -135,8 +135,8 @@ impl_settings! { AppSettings, AppFlags,
         => Flags::UNIFIED_HELP,
     NextLineHelp("nextlinehelp")
         => Flags::NEXT_LINE_HELP,
-    VersionlessSubcommands("versionlesssubcommands")
-        => Flags::VERSIONLESS_SC,
+    DisableVersionFlagForSubcommands("disableversionflagforsubcommands")
+        => Flags::DISABLE_VERSION_FLAG_FOR_SC,
     WaitOnError("waitonerror")
         => Flags::WAIT_ON_ERROR,
     TrailingValues("trailingvalues")
@@ -656,7 +656,7 @@ pub enum AppSettings {
     /// [``]: ./struct..html
     DisableHelpSubcommand,
 
-    /// Disables `-V` and `--version` [`App`] without affecting any of the [``]s
+    /// Disables `-V` and `--version` for this [`App`] without affecting any of the [``]s
     /// (Defaults to `false`; application *does* have a version flag)
     ///
     /// # Examples
@@ -689,6 +689,27 @@ pub enum AppSettings {
     /// [`App`]: ./struct.App.html
     DisableVersionFlag,
 
+    /// Disables `-V` and `--version` for all [`subcommand`]s of this [`App`]
+    /// (Defaults to `false`; subcommands *do* have version flags.)
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use clap::{App, AppSettings, ErrorKind};
+    /// let res = App::new("myprog")
+    ///     .version("v1.1")
+    ///     .setting(AppSettings::DisableVersionFlagForSubcommands)
+    ///     .subcommand(App::new("test"))
+    ///     .try_get_matches_from(vec![
+    ///         "myprog", "test", "-V"
+    ///     ]);
+    /// assert!(res.is_err());
+    /// assert_eq!(res.unwrap_err().kind, ErrorKind::UnknownArgument);
+    /// ```
+    /// [`App`]: ./struct.App.html
+    /// [``]: ./struct..html
+    DisableVersionFlagForSubcommands,
+
     /// Displays the arguments and [``]s in the help message in the order that they were
     /// declared in, and not alphabetically which is the default.
     ///
@@ -705,9 +726,6 @@ pub enum AppSettings {
 
     /// Specifies to use the version of the current command for all child [``]s.
     /// (Defaults to `false`; subcommands have independent version strings from their parents.)
-    ///
-    /// **NOTE:** The version for the current command **and** this setting must be set **prior** to
-    /// adding any child subcommands
     ///
     /// # Examples
     ///
@@ -998,28 +1016,6 @@ pub enum AppSettings {
     /// ```
     UnifiedHelpMessage,
 
-    /// Disables `-V` and `--version` for all [``]s
-    /// (Defaults to `false`; subcommands *do* have version flags.)
-    ///
-    /// **NOTE:** This setting must be set **prior** to adding any subcommands.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// # use clap::{App, AppSettings, ErrorKind};
-    /// let res = App::new("myprog")
-    ///     .version("v1.1")
-    ///     .setting(AppSettings::VersionlessSubcommands)
-    ///     .subcommand(App::new("test"))
-    ///     .try_get_matches_from(vec![
-    ///         "myprog", "test", "-V"
-    ///     ]);
-    /// assert!(res.is_err());
-    /// assert_eq!(res.unwrap_err().kind, ErrorKind::UnknownArgument);
-    /// ```
-    /// [``]: ./struct..html
-    VersionlessSubcommands,
-
     /// Will display a message "Press \[ENTER\]/\[RETURN\] to continue..." and wait for user before
     /// exiting
     ///
@@ -1197,8 +1193,10 @@ mod test {
             AppSettings::UnifiedHelpMessage
         );
         assert_eq!(
-            "versionlesssubcommands".parse::<AppSettings>().unwrap(),
-            AppSettings::VersionlessSubcommands
+            "disableversionflagforsubcommands"
+                .parse::<AppSettings>()
+                .unwrap(),
+            AppSettings::DisableVersionFlagForSubcommands
         );
         assert_eq!(
             "waitonerror".parse::<AppSettings>().unwrap(),
