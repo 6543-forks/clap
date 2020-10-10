@@ -2289,7 +2289,7 @@ impl<'help> App<'help> {
                     let gv = $_self.settings.is_set(AppSettings::GlobalVersion);
 
                     if vsc {
-                        $sc.set(AppSettings::DisableVersion);
+                        $sc.set(AppSettings::DisableVersionFlag);
                     }
                     if gv && $sc.version.is_none() && $_self.version.is_some() {
                         $sc.set(AppSettings::GlobalVersion);
@@ -2369,7 +2369,7 @@ impl<'help> App<'help> {
             .args
             .iter()
             .any(|x| x.long == Some("version") || x.id == Id::version_hash())
-            || self.is_set(AppSettings::DisableVersion)
+            || self.is_set(AppSettings::DisableVersionFlag)
             || self
                 .subcommands
                 .iter()
